@@ -12,12 +12,18 @@ const filePath = "file/configurations.json"
 type (
 	//Config is all configurations in the service
 	Config struct {
-		Port PortConfig `json:"port"`
+		Port   PortConfig   `json:"port"`
+		Worker WorkerConfig `json:"worker"`
 	}
 
 	//PortConfig to get all port configs
 	PortConfig struct {
 		Main int `json:"main"`
+	}
+
+	//WorkerConfig to get concurrent worker configs
+	WorkerConfig struct {
+		Default int `json:"default"`
 	}
 )
 
