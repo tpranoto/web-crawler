@@ -2,6 +2,30 @@
 
 
 [[projects]]
+  digest = "1:55be81f19ec0dfc7cd8a0f845513af42b63220a717043a4ae01aaf2846f291d7"
+  name = "github.com/PuerkitoBio/goquery"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b3706f8903171e91b2ad8cdb1e59eb2be67c010b"
+  version = "v1.6.0"
+
+[[projects]]
+  digest = "1:4541494abfa96c333e22c3ecef56724ba74de46772581dc2d106e9cbaf0640c9"
+  name = "github.com/andybalholm/cascadia"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "903109d295d56a99095f2cfab0c2ca8d4b22f648"
+  version = "v1.2.0"
+
+[[projects]]
+  digest = "1:7ae311278f7ccaa724de8f2cdec0a507ba3ee6dea8c77237e8157bcf64b0f28b"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "UT"
+  revision = "f7b1909c82a8958747e5c87c6a5c3b2eaed8a33d"
+  version = "v1.4.4"
+
+[[projects]]
   digest = "1:9e1d37b58d17113ec3cb5608ac0382313c5b59470b94ed97d0976e69c7022314"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -9,9 +33,24 @@
   revision = "614d223910a179a466c1767a985424175c39b465"
   version = "v0.9.1"
 
+[[projects]]
+  branch = "master"
+  digest = "1:5915a70a984271cfd71462c8aa940f8e6ce8c1bef0694483cdfb70604821d17f"
+  name = "golang.org/x/net"
+  packages = [
+    "html",
+    "html/atom",
+  ]
+  pruneopts = "UT"
+  revision = "ac852fbbde11df194bfd5004603c7c8e117901f2"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/pkg/errors"]
+  input-imports = [
+    "github.com/PuerkitoBio/goquery",
+    "github.com/golang/mock/gomock",
+    "github.com/pkg/errors",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
