@@ -16,7 +16,8 @@ a web application served in a REST API to take URL in query parameter and provid
 ## Notes
 * href with `tel:`, `mailto:`, `#`, `javascript` will be counted to internal links
 * links that are inaccessible will be removed from internal/external links
-* It will take a few seconds to generate response because it needs to check if links are accessible or not (though it is improved with limited concurrency (10 go routines))
+* same links will not be omitted
+* It will take a few seconds to generate response because it needs to check if links are accessible or not (though it is improved with limited concurrency (10 go routines) and local cache)
 
 ## Instructions
 1. Clone from master branch
