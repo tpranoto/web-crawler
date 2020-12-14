@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const filePath = "file/configurations.json"
+var filePath = "file/configurations.json"
 
 type (
 	//Config is all configurations in the service

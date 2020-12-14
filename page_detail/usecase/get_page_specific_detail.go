@@ -131,11 +131,8 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 			}
 			links = append(links, href)
 		})
-
-		log.Println("links: ", len(links))
 		//process the links
 		result.Links.Internal, result.Links.External, result.Links.Inaccessible = p.separateLinks(ctx, input, links)
-
 	}()
 
 	wg.Add(1)
@@ -161,8 +158,8 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 }
 
 func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links []string) (internal model.LinkDetail, external model.LinkDetail, inaccessible model.LinkDetailWithError) {
-	//save same links into a map acting as a cache
-	cacheLink := map[string]model.CacheValue{}
+	//save same links into a map acting as a local cache
+	localCache := map[string]model.CacheValue{}
 
 	//set up waitgroup,channel, mutexes for concurrent
 	var wg sync.WaitGroup
@@ -178,7 +175,7 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 			for link := range channel {
 				//get from cache if available
 				mutexCache.Lock()
-				cache, ok := cacheLink[link]
+				cache, ok := localCache[link]
 				mutexCache.Unlock()
 				if ok {
 					if cache.Reachable {
@@ -201,39 +198,45 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 
 				var isInternal, accessible bool
 				href := link
+				//prepare internal links
+				if !strings.HasPrefix(link, "http://") && !strings.HasPrefix(link, "https://") {
+					//if internal links prefix != / than count it as internal accessible link
+					//ex: tel:, mailto:, #section, javascript:
+					if !strings.HasPrefix(link, "/") {
+						mutexInternal.Lock()
+						internal.Data = append(internal.Data, link)
+						mutexInternal.Unlock()
+						isInternal = true
+						accessible = true
 
-				//prepare internal links and add non links to inaccessible
-				if strings.HasPrefix(link, "/") {
+						//save link details to map cache
+						mutexCache.Lock()
+						localCache[link] = model.CacheValue{
+							Internal:  isInternal,
+							Reachable: accessible,
+						}
+						mutexCache.Unlock()
+						continue
+					}
+					//prepare internal links
+					//internal links
 					parsedURL, _ := url.Parse(urlInput)
 					href = fmt.Sprintf("%s://%s%s", parsedURL.Scheme, parsedURL.Host, link)
 					isInternal = true
-				} else if !strings.HasPrefix(link, "http://") && !strings.HasPrefix(link, "https://") {
-					mutexInaccessible.Lock()
-					inaccessible.Data = append(inaccessible.Data, link)
-					mutexInaccessible.Unlock()
-					isInternal = true
-
-					//save link details to map cache
-					mutexCache.Lock()
-					cacheLink[link] = model.CacheValue{
-						Internal:  isInternal,
-						Reachable: accessible,
-					}
-					mutexCache.Unlock()
-					continue
 				}
 
+				//get status code from the links
 				linkRes, err := p.pageRepo.GetContentFromURL(ctx, href)
 				if err != nil {
 					mutexInaccessible.Lock()
-					inaccessible.Data = append(inaccessible.Data, href)
-					inaccessible.Errors = append(inaccessible.Errors, fmt.Sprintf("failed to get %s, %s", href, err.Error()))
+					inaccessible.Data = append(inaccessible.Data, link)
+					inaccessible.Errors = append(inaccessible.Errors, fmt.Sprintf("failed to get %s, %s", link, err.Error()))
 					mutexInaccessible.Unlock()
 					log.Printf("[GetPageDetail]%s", err.Error())
 
 					//save link details to map cache
 					mutexCache.Lock()
-					cacheLink[link] = model.CacheValue{
+					localCache[link] = model.CacheValue{
 						Internal:  isInternal,
 						Reachable: accessible,
 					}
@@ -244,13 +247,13 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 				//if response status != 200 && 999(crawled) -> counts as inaccessible
 				if linkRes.StatusCode != http.StatusOK && linkRes.StatusCode != 999 {
 					mutexInaccessible.Lock()
-					inaccessible.Data = append(inaccessible.Data, href)
-					inaccessible.Errors = append(inaccessible.Errors, fmt.Sprintf("status %d for %s", linkRes.StatusCode, href))
+					inaccessible.Data = append(inaccessible.Data, link)
+					inaccessible.Errors = append(inaccessible.Errors, fmt.Sprintf("status %d for %s", linkRes.StatusCode, link))
 					mutexInaccessible.Unlock()
 
 					//save link details to map cache
 					mutexCache.Lock()
-					cacheLink[link] = model.CacheValue{
+					localCache[link] = model.CacheValue{
 						Internal:  isInternal,
 						Reachable: accessible,
 					}
@@ -259,28 +262,20 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 				}
 
 				accessible = true
-				//save to internal data
+				//save to internal data / external data
 				if isInternal {
 					mutexInternal.Lock()
-					internal.Data = append(internal.Data, href)
+					internal.Data = append(internal.Data, link)
 					mutexInternal.Unlock()
-
-					//save link details to map cache
-					mutexCache.Lock()
-					cacheLink[link] = model.CacheValue{
-						Internal:  isInternal,
-						Reachable: accessible,
-					}
-					mutexCache.Unlock()
-					continue
+				} else {
+					mutexExternal.Lock()
+					external.Data = append(external.Data, link)
+					mutexExternal.Unlock()
 				}
-				mutexExternal.Lock()
-				external.Data = append(external.Data, href)
-				mutexExternal.Unlock()
 
 				//save link details to map cache
 				mutexCache.Lock()
-				cacheLink[link] = model.CacheValue{
+				localCache[link] = model.CacheValue{
 					Internal:  isInternal,
 					Reachable: accessible,
 				}
