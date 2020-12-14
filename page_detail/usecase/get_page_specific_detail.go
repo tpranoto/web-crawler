@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/tpranoto/gochallenge/common/config"
+	panics "github.com/tpranoto/gochallenge/common/panic_handler"
 	"github.com/tpranoto/gochallenge/page_detail/model"
 	"github.com/tpranoto/gochallenge/page_detail/repo"
 
@@ -38,6 +39,8 @@ func NewPageDetailUsecase(pageContentRepo repo.PageContent, cfg config.Config) P
 }
 
 func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result model.PageDetailsData, err error) {
+	defer panics.HandlePanic("[GetPageDetail]")
+
 	doc, err := goquery.NewDocument(input)
 	if err != nil {
 		err = errors.Wrap(err, "[GetPageDetail]")
@@ -46,7 +49,7 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 		html, _ := doc.Html()
 		result.Version = findHTMLVersion(html)
@@ -55,70 +58,70 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 		doc.Find("title").Each(func(idx int, selection *goquery.Selection) {
 			result.Title = selection.Text()
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h1 heading counts
 		doc.Find("h1").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H1++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h2 heading counts
 		doc.Find("h2").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H2++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h3 heading counts
 		doc.Find("h3").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H3++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h4 heading counts
 		doc.Find("h4").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H4++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h5 heading counts
 		doc.Find("h5").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H5++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get h6 heading counts
 		doc.Find("h6").Each(func(idx int, selection *goquery.Selection) {
 			result.HeadingLevels.H6++
 		})
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		//get all links in the page
@@ -133,10 +136,10 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 		})
 		//process the links
 		result.Links.Internal, result.Links.External, result.Links.Inaccessible = p.separateLinks(ctx, input, links)
-	}()
+	})
 
 	wg.Add(1)
-	go func() {
+	go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 		defer wg.Done()
 
 		doc.Find("input").Each(func(idx int, selection *goquery.Selection) {
@@ -150,7 +153,7 @@ func (p *pageDetail) GetPageDetail(ctx context.Context, input string) (result mo
 				result.HasLoginForm = true
 			}
 		})
-	}()
+	})
 
 	wg.Wait()
 
@@ -169,7 +172,7 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 	//limit concurrent to 10 worker
 	for worker := 0; worker < p.cfg.Worker.Default; worker++ {
 		wg.Add(1)
-		go func() {
+		go panics.ConcurrentHandlePanic("[GetPageDetail]", func() {
 			defer wg.Done()
 			//get all links from channel
 			for link := range channel {
@@ -281,7 +284,7 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 				}
 				mutexCache.Unlock()
 			}
-		}()
+		})
 
 	}
 	for _, link := range links {
