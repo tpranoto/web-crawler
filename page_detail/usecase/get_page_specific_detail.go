@@ -248,7 +248,7 @@ func (p *pageDetail) separateLinks(ctx context.Context, urlInput string, links [
 				}
 
 				//if response status != 200 && 999(crawled) -> counts as inaccessible
-				if linkRes.StatusCode != http.StatusOK && linkRes.StatusCode != 999 {
+				if linkRes.StatusCode != http.StatusOK && linkRes.StatusCode != 999 && linkRes.StatusCode != http.StatusTooManyRequests {
 					mutexInaccessible.Lock()
 					inaccessible.Data = append(inaccessible.Data, link)
 					inaccessible.Errors = append(inaccessible.Errors, fmt.Sprintf("status %d for %s", linkRes.StatusCode, link))
