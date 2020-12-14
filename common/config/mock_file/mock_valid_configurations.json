@@ -1,8 +1,8 @@
 {
     "port":{
-        "main":1234
+        "main":111
     },
     "worker":{
-        "default":10
+        "default":1
     }
 }

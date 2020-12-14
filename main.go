@@ -21,7 +21,7 @@ func main() {
 
 	//PageDetail deps
 	pageRepo := repoPDetail.NewPageContentRepo()
-	pageUsecase := usecasePDetail.NewPageDetailUsecase(pageRepo)
+	pageUsecase := usecasePDetail.NewPageDetailUsecase(pageRepo, cfg)
 	presenterPDetail := presenterPDetail.NewRestHandler(pageUsecase)
 
 	//Assign rests endpoints
