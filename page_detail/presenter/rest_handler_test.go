@@ -65,13 +65,25 @@ func Test_restHandler_HandlerGetPageSpecificDetail(t *testing.T) {
 				mockUC.EXPECT().GetPageDetail(gomock.Any(), "test.com").Return(model.PageDetailsData{}, errors.New("error"))
 			},
 		},
+		{
+			name: "no input",
+			fields: fields{
+				pageDetail: mockUC,
+			},
+			args: args{
+				w: httptest.NewRecorder(),
+				r: &http.Request{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rh := &restHandler{
 				pageDetail: tt.fields.pageDetail,
 			}
-			tt.setup()
+			if tt.setup != nil {
+				tt.setup()
+			}
 			rh.HandlerGetPageSpecificDetail(tt.args.w, tt.args.r)
 		})
 	}

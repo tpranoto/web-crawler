@@ -32,6 +32,10 @@ func (rh *restHandler) HandlerGetPageSpecificDetail(w http.ResponseWriter, r *ht
 	writer := response.NewRestResponse(time.Now())
 	//take url from query param
 	url := r.FormValue("url")
+	if url == "" {
+		writer.WriteError(w, http.StatusBadRequest, "missing url input")
+		return
+	}
 
 	res, err := rh.pageDetail.GetPageDetail(ctx, url)
 	if err != nil {
