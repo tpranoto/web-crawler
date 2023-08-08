@@ -1,4 +1,4 @@
-# gochallenge
+# Web Crawler
 ## Summary
 a web application served in a REST API to take URL in query parameter and provides several information in the json response:
 * HTML Version
